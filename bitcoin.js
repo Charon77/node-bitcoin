@@ -2,8 +2,7 @@
 /* jshint node: true, devel: true */
 
 const
-	request = require('request'),
-	talib = require('talib')
+	request = require('request')
 ;
 
 const Talib = (options) => {
@@ -99,39 +98,6 @@ module.exports =
 	getLast(OLHCArray, ticker)
 	{
 		return OLHCArray[ticker].last;
-	},
-	
-	getStochastic()
-	{
-		const isClosing = (lineA, lineB) => {
-			console.log(lineA.last ,lineB.last);
-			return (lineA.last - lineB.last);
-		};
-		
-		return new Promise ((resolve, reject)=>{
-			this.getBitcoinchartsOHLC(30)
-			.then((marketData)=>{
-				Talib({
-					name: "STOCH",
-					startIdx: 0,
-					endIdx: marketData.close.length - 1,
-					high: marketData.high,
-					low: marketData.low,
-					close: marketData.close,
-					optInFastK_Period: 14,
-					optInSlowK_Period: 7,
-					optInSlowK_MAType: 0,
-					optInSlowD_Period: 3,
-					optInSlowD_MAType: 0
-				})
-				.then(({result})=>{
-					// console.log("Result of calculation:");
-					// console.log(result);
-					return resolve(isClosing(result.outSlowK, result.outSlowD));
-				});
-			});
-		});
-		
 	},
 	
 	_getRawBitcoinOHLC(timeframe, resolution)
