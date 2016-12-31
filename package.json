@@ -1,0 +1,24 @@
+{
+  "name": "node-bitcoin",
+  "version": "1.0.0",
+  "description": "Node Wrapper for bitcoin.co.id and bitcoincharts.com",
+  "main": "bitcoin.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Charon77/node-bitcoin.git"
+  },
+  "keywords": [
+    "bitcoin",
+    "node",
+    "price"
+  ],
+  "author": "Evans Jahja",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Charon77/node-bitcoin/issues"
+  },
+  "homepage": "https://github.com/Charon77/node-bitcoin#readme"
+}
