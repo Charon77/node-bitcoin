@@ -54,7 +54,7 @@ module.exports =
 			});
 		} else {
 			// Get from bitcoin chart
-			tickerBCC = translateTicker[ticker];
+			const tickerBCC = translateTicker[ticker];
 			timeframe = timeframe || 1;
 			return new Promise((resolve, reject) => {
 				let resolution;
