@@ -49,6 +49,18 @@ module.exports =
 						return reject(error);
 					}
 					
+					if (!body)
+					{
+						console.log("Missing body (?)");
+						return reject(error);
+					}
+					
+					if (!body.ticker)
+					{
+						console.log("Missing body.ticker (?)");
+						return reject(body);
+					}
+					
 					return resolve(body.ticker[ticker]);
 				});					
 			});
