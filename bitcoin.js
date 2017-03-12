@@ -1,16 +1,9 @@
+/* jshint node: true, devel: true, esversion: 6 */
 'use strict';
-/* jshint node: true, devel: true */
 
 const
 	request = require('request')
 ;
-
-const Talib = (options) => {
-	return new Promise ((resolve, reject)=>{
-		console.log("Calculating");
-		talib.execute(options, resolve);
-	});
-}
 
 if (!Array.prototype.hasOwnProperty('last')){
 	Object.defineProperty(Array.prototype, 'last', {
@@ -25,16 +18,19 @@ if (!Array.prototype.hasOwnProperty('last')){
 
 module.exports = 
 {
-	getPrice (ticker, timeframe)
+	getPrice ({ticker = 'last', timeframe = 1, backend = 'btcoid', resolution = 90} = {})
 	{
+		
 		// different ticker for BCC: Bitcoin Chart
 		const translateTicker = {
+			'last': 'close',
 			'high': 'high',
 			'low': 'low',
 			'vol_btc': 'volume'			
 		};
 		
-		if (ticker == 'last')
+		
+		if (backend == 'btcoid')
 		{
 			// Get result from BTCID
 			//Ticker: last, high, low, vol_btc, vol_idr, buy, sell
@@ -55,32 +51,41 @@ module.exports =
 						return reject(error);
 					}
 					
-					if (!body.ticker)
+					if (!ticker in body)
 					{
 						console.log("Missing body.ticker (?)");
 						return reject(body);
 					}
 					
+					if (!ticker in body.ticker)
+					{
+						console.log("Missing body.ticker.ticker (?)");
+						return reject(body.ticker);
+					}
+					
 					return resolve(body.ticker[ticker]);
 				});					
 			});
-		} else {
+		} else if (backend == 'btcchart') {
 			// Get from bitcoin chart
-			const tickerBCC = translateTicker[ticker];
-			timeframe = timeframe || 1;
+			
+			let tickerBCC
+			if (ticker in translateTicker) {
+				tickerBCC = translateTicker[ticker];
+			} else {
+				console.log("Warn: ticker not translated")
+				tickerBCC = ticker;
+			}
+			
+			
 			return new Promise((resolve, reject) => {
-				let resolution;
-				if (ticker == 'vol_btc')
-				{
-					resolution = '30-min';
-					if (timeframe > 1)
-					{
-						resolution = 'Daily';
-					}
-				}
 				this.getBitcoinchartsOHLC(timeframe, resolution)
 					.then((OLHCArray)=>{
 						return resolve(this.getLast(OLHCArray, tickerBCC));
+					})
+					.catch((error) => {
+						console.log("Error:", error)
+						return reject(error);
 					});
 			});
 		}
@@ -109,6 +114,12 @@ module.exports =
 	
 	getLast(OLHCArray, ticker)
 	{
+		if (!OLHCArray[ticker]) {
+			console.log("Invalid ticker:", ticker)
+		}
+		console.log(OLHCArray[ticker])
+		
+		
 		return OLHCArray[ticker].last;
 	},
 	
@@ -138,18 +149,18 @@ module.exports =
 			obj = {};
 			obj.timestamp = [];
 			obj.open = [];
-			obj.close = [];
-			obj.high = [];
 			obj.low = [];
+			obj.high = [];
+			obj.close = [];
 			obj.volume = [];
 			return obj;
 		}
-		// open: [...], close: [...], high: [...], low: [...], volume: [...] };
+		// open: [...], low: [...], high: [...], close: [...], volume: [...] };
 		obj.timestamp.push(element[0]);
 		obj.open.push(element[1]);
-		obj.close.push(element[2]);
+		obj.low.push(element[2]);
 		obj.high.push(element[3]);
-		obj.low.push(element[4]);
+		obj.close.push(element[4]);
 		obj.volume.push(element[5]);
 	}
 		
