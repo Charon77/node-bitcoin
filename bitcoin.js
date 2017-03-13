@@ -18,16 +18,8 @@ if (!Array.prototype.hasOwnProperty('last')){
 
 module.exports = 
 {
-	getPrice ({ticker = 'last', timeframe = 1, backend = 'btcoid', resolution = 90} = {})
+	getPrice ({timeframe = 1, backend = 'btcoid', resolution = '30-min'} = {})
 	{
-		
-		// different ticker for BCC: Bitcoin Chart
-		const translateTicker = {
-			'last': 'close',
-			'high': 'high',
-			'low': 'low',
-			'vol_btc': 'volume'			
-		};
 		
 		
 		if (backend == 'btcoid')
@@ -50,38 +42,17 @@ module.exports =
 						console.log("Missing body (?)");
 						return reject(error);
 					}
-					
-					if (!ticker in body)
-					{
-						console.log("Missing body.ticker (?)");
-						return reject(body);
-					}
-					
-					if (!ticker in body.ticker)
-					{
-						console.log("Missing body.ticker.ticker (?)");
-						return reject(body.ticker);
-					}
-					
-					return resolve(body.ticker[ticker]);
+										
+					return resolve(body.ticker);
 				});					
 			});
 		} else if (backend == 'btcchart') {
 			// Get from bitcoin chart
-			
-			let tickerBCC
-			if (ticker in translateTicker) {
-				tickerBCC = translateTicker[ticker];
-			} else {
-				console.log("Warn: ticker not translated")
-				tickerBCC = ticker;
-			}
-			
-			
 			return new Promise((resolve, reject) => {
-				this.getBitcoinchartsOHLC(timeframe, resolution)
+				this.getBitcoinchartsOHLC(arguments[0])
 					.then((OLHCArray)=>{
-						return resolve(this.getLast(OLHCArray, tickerBCC));
+						//return resolve(this.getLast(OLHCArray, tickerBCC)); // Returns last thing
+						return resolve(OLHCArray.last)
 					})
 					.catch((error) => {
 						console.log("Error:", error)
@@ -91,16 +62,34 @@ module.exports =
 		}
 	},
 	
-	getBitcoinchartsOHLC(timeframe, resolution)
+	getBitcoinchartsOHLC({timeframe = 1, resolution = '30-min', transpose = false} = {})
 	{
 		return new Promise((resolve, reject) => {
-			this._getRawBitcoinOHLC(timeframe || 90, resolution || 'Daily')
+			this._getRawBitcoinOHLC(arguments[0])
 			.then((arr) => {
-				var OLHCArray = this._addToOLHCArray();
-				arr.map((e) => {
-					this._addToOLHCArray(e, OLHCArray);
-				});
-				return resolve(OLHCArray);
+				if (!transpose) {
+					let OLHCArray = this._addToOLHCArray();
+					return resolve(
+						arr.map((olhc)=> {
+						let [t,o,l,h,c,v,w,x] = olhc
+						return {
+							timestamp: t,
+							open: o,
+							low: l,
+							high: h,
+							close: c,
+							volume_btc: v,
+							volume_cur: w,
+							weighted_price: x}
+						})
+					);
+				} else {
+					let OLHCArray = this._addToOLHCArray();
+					arr.map((e) => {
+						this._addToOLHCArray(e, OLHCArray);
+					});
+					return resolve(OLHCArray);
+				}
 			})
 			.catch((error) =>
 			{
@@ -123,22 +112,36 @@ module.exports =
 		return OLHCArray[ticker].last;
 	},
 	
-	_getRawBitcoinOHLC(timeframe, resolution)
+	_getRawBitcoinOHLC({
+		timeframe = 1,
+		resolution = '30-min',
+		customTime = {
+			startTime: startTime,
+			stopTime: stopTime
+		}
+	})
 	{
 		return new Promise ((resolve, reject) => {
-			request({
+			let r = request({
 				// Resolution is Daily, Weekly, 30-min, etc
-				uri: 'https://bitcoincharts.com/charts/chart.json?m=btcoidIDR&i=' + resolution +'&SubmitButton=Draw&r='+timeframe,
-				json: true
+				url: 'https://bitcoincharts.com/charts/chart.json',
+				qs: {
+					m: 'btcoidIDR',
+					i: resolution,
+					SubmitButton: 'Draw',
+					r: timeframe
+					}
 			},
 			(error, response, body) => {
+				console.log(response)
 				if (error) {
 					console.log("_getRawBitcoinOLHC");
 					return reject(error);
 				}
 				// Format: Timestamp, Open, High, Low, Close, Volume(BTC), Volume (Currency), Weighted Price
 				return resolve(body);
-			});
+			})
+			
 		});
 	},
 	
