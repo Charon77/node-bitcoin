@@ -6,6 +6,19 @@ const
 	talib = require('talib')
 ;
 
+const Talib = function ({}) {
+	const talibArgs = arguments[0];
+	return new Promise((resolve, reject) => {
+		talib.execute(talibArgs, function({error, result}) {
+			if (error) {
+				console.log(result)
+				return reject(error)
+			}
+			return resolve(result)
+		})
+	})
+}
+
 if (!Array.prototype.hasOwnProperty('last')){
 	Object.defineProperty(Array.prototype, 'last', {
 		get: function(){
@@ -21,8 +34,6 @@ module.exports =
 {
 	getPrice ({timeframe = 1, backend = 'btcoid', resolution = '30-min'} = {})
 	{
-		
-		
 		if (backend == 'btcoid')
 		{
 			// Get result from BTCID
@@ -70,7 +81,6 @@ module.exports =
 			.then((arr) => {
 				if (!transpose) {
 					let OLHCArray = this._addToOLHCArray();
-					console.log(arr)
 					return resolve(
 						arr.map((olhc)=> {
 						let [t,o,l,h,c,v,w,x] = olhc
@@ -108,15 +118,14 @@ module.exports =
 		return OLHCArray.last;
 	},
 	
-	getStochastic()
+	getStochastic({backend, transpose = true} = {})
 	{
 		const isClosing = (lineA, lineB) => {
 			console.log(lineA.last ,lineB.last);
 			return (lineA.last - lineB.last);
 		};
-		
 		return new Promise ((resolve, reject)=>{
-			this.getBitcoinchartsOHLC({backend: 'btcchart', transpose: true})
+			this.getBitcoinchartsOHLC(Object.assign({}, arguments[0], {transpose: true}))
 			.then((marketData)=>{
 				Talib({
 					name: "STOCH",
@@ -131,10 +140,9 @@ module.exports =
 					optInSlowD_Period: 3,
 					optInSlowD_MAType: 0
 				})
-				.then(({result})=>{
-					// console.log("Result of calculation:");
-					// console.log(result);
-					return resolve(isClosing(result.outSlowK, result.outSlowD));
+				.then(result=>{
+					//return resolve(isClosing(result.outSlowK, result.outSlowD));
+					return resolve(result)
 				})
 				.catch(error=>console.log("Talib err:",error))
 				;
@@ -162,7 +170,6 @@ module.exports =
 				json: true
 			},
 			(error, response, body) => {
-				console.log(response)
 				if (error) {
 					console.log("_getRawBitcoinOLHC");
 					return reject(error);
