@@ -135,10 +135,10 @@ module.exports =
 					low: marketData.low,
 					close: marketData.close,
 					optInFastK_Period: 14,
-					optInSlowK_Period: 7,
-					optInSlowK_MAType: 0,
+					optInSlowK_Period: 5,
+					optInSlowK_MAType: 2,
 					optInSlowD_Period: 3,
-					optInSlowD_MAType: 0
+					optInSlowD_MAType: 2
 				})
 				.then(result=>{
 					//return resolve(isClosing(result.outSlowK, result.outSlowD));
