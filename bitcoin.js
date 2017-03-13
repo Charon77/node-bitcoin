@@ -2,7 +2,8 @@
 'use strict';
 
 const
-	request = require('request')
+	request = require('request'),
+	talib = require('talib')
 ;
 
 if (!Array.prototype.hasOwnProperty('last')){
@@ -69,6 +70,7 @@ module.exports =
 			.then((arr) => {
 				if (!transpose) {
 					let OLHCArray = this._addToOLHCArray();
+					console.log(arr)
 					return resolve(
 						arr.map((olhc)=> {
 						let [t,o,l,h,c,v,w,x] = olhc
@@ -103,23 +105,49 @@ module.exports =
 	
 	getLast(OLHCArray, ticker)
 	{
-		if (!OLHCArray[ticker]) {
-			console.log("Invalid ticker:", ticker)
-		}
-		console.log(OLHCArray[ticker])
-		
-		
-		return OLHCArray[ticker].last;
+		return OLHCArray.last;
 	},
 	
+	getStochastic()
+	{
+		const isClosing = (lineA, lineB) => {
+			console.log(lineA.last ,lineB.last);
+			return (lineA.last - lineB.last);
+		};
+		
+		return new Promise ((resolve, reject)=>{
+			this.getBitcoinchartsOHLC({backend: 'btcchart', transpose: true})
+			.then((marketData)=>{
+				Talib({
+					name: "STOCH",
+					startIdx: 0,
+					endIdx: marketData.close.length - 1,
+					high: marketData.high,
+					low: marketData.low,
+					close: marketData.close,
+					optInFastK_Period: 14,
+					optInSlowK_Period: 7,
+					optInSlowK_MAType: 0,
+					optInSlowD_Period: 3,
+					optInSlowD_MAType: 0
+				})
+				.then(({result})=>{
+					// console.log("Result of calculation:");
+					// console.log(result);
+					return resolve(isClosing(result.outSlowK, result.outSlowD));
+				})
+				.catch(error=>console.log("Talib err:",error))
+				;
+			})
+			.catch(error=>console.log("Stoch err:",error))
+			;
+		});
+		
+	},
 	_getRawBitcoinOHLC({
 		timeframe = 1,
-		resolution = '30-min',
-		customTime = {
-			startTime: startTime,
-			stopTime: stopTime
-		}
-	})
+		resolution = '30-min'		
+	} = {})
 	{
 		return new Promise ((resolve, reject) => {
 			let r = request({
@@ -130,7 +158,8 @@ module.exports =
 					i: resolution,
 					SubmitButton: 'Draw',
 					r: timeframe
-					}
+					},
+				json: true
 			},
 			(error, response, body) => {
 				console.log(response)

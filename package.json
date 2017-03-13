@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/Charon77/node-bitcoin#readme",
   "dependencies": {
-    "request": "^2.79.0"
+    "request": "^2.79.0",
+    "talib": "^1.0.2"
   }
 }
