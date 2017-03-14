@@ -154,19 +154,26 @@ module.exports =
 	},
 	_getRawBitcoinOHLC({
 		timeframe = 1,
+		customTime,
 		resolution = '30-min'		
 	} = {})
 	{
 		return new Promise ((resolve, reject) => {
+			let query = {
+				m: 'btcoidIDR',
+				i: resolution,
+				SubmitButton: 'Draw',
+				r: timeframe
+			}
+			if (customTime) {
+				{delete query.r}
+				[query.c, query.s, query.e] = [1, customTime.startDate, customTime.endDate]
+			}
+			
 			let r = request({
 				// Resolution is Daily, Weekly, 30-min, etc
 				url: 'https://bitcoincharts.com/charts/chart.json',
-				qs: {
-					m: 'btcoidIDR',
-					i: resolution,
-					SubmitButton: 'Draw',
-					r: timeframe
-					},
+				qs: query,
 				json: true
 			},
 			(error, response, body) => {
