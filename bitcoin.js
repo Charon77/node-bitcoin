@@ -177,7 +177,7 @@ module.exports =
 				json: true
 			},
 			(error, response, body) => {
-				if (error) {
+				if (error || !body) {
 					console.log("_getRawBitcoinOLHC");
 					return reject(error);
 				}
